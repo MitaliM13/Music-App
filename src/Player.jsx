@@ -9,6 +9,7 @@ function Player() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [isMuted, setIsMuted] = useState(false)
     const audioRef = useRef(null);
 
     useEffect(() => {
@@ -71,6 +72,11 @@ function Player() {
         setCurrentTime(seekTime);
     };
 
+    const toggleMute = () => {
+        setIsMuted(!isMuted)
+        audioRef.current.muted = !audioRef.current.muted
+    }
+
     const formatTime = (time) => {
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60);
@@ -88,13 +94,14 @@ function Player() {
         className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
             <img src={spotifyLogo} alt="Spotify Logo" className="w-32 mb-8" />
             <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-lg max-w-sm">
+            <h2 className="text-2xl font-semibold">{name}</h2>
+            <h4 className="text-md font-light text-gray-400 mb-4">{artist}</h4>
                 <img 
-                    src={`https://your-cdn.com/${cover }`} 
+                    src={`https://cms.samespace.com/assets/${cover}`} 
                     alt={name} 
                     className="w-64 h-64 object-cover rounded-lg mb-4 shadow-lg"
                 />
-                <h2 className="text-2xl font-semibold">{name}</h2>
-                <h4 className="text-md font-light text-gray-400 mb-4">{artist}</h4>
+                
 
                 <input 
                     type="range" 
@@ -127,6 +134,12 @@ function Player() {
                         className="text-white bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center"
                     >
                         ▶
+                    </button>
+                    <button
+                        onClick={toggleMute}
+                        className="text-white bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center"
+                    >
+                        {isMuted ? '🔇' : '🔊'}
                     </button>
                 </div>
                 <audio ref={audioRef} id="audio" src={songUrl}></audio>
