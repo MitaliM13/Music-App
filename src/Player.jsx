@@ -9,7 +9,7 @@ function Player() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
-    const [isMuted, setIsMuted] = useState(false)
+    const [isMuted, setIsMuted] = useState(false);
     const audioRef = useRef(null);
 
     useEffect(() => {
@@ -34,7 +34,13 @@ function Player() {
             audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
             audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
         }
-    }, [currentSongIndex]);
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+                audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            }
+        };
+    }, [audioRef, currentSongIndex]);
 
     const handleTimeUpdate = () => {
         setCurrentTime(audioRef.current.currentTime);
@@ -57,13 +63,15 @@ function Player() {
     const nextSong = () => {
         setCurrentSongIndex((prevIndex) => (prevIndex + 1) % songs.length);
         setIsPlaying(false);
-        setCurrentTime(0);
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
     };
 
     const previousSong = () => {
         setCurrentSongIndex((prevIndex) => (prevIndex - 1 + songs.length) % songs.length);
         setIsPlaying(false);
-        setCurrentTime(0);
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
     };
 
     const handleSeek = (e) => {
@@ -73,9 +81,9 @@ function Player() {
     };
 
     const toggleMute = () => {
-        setIsMuted(!isMuted)
-        audioRef.current.muted = !audioRef.current.muted
-    }
+        setIsMuted(!isMuted);
+        audioRef.current.muted = !audioRef.current.muted;
+    };
 
     const formatTime = (time) => {
         const minutes = Math.floor(time / 60);
@@ -90,18 +98,16 @@ function Player() {
     const { name, artist, cover, url: songUrl, accent } = songs[currentSongIndex];
 
     return (
-        <div style={{backgroundColor: accent}}
-        className="flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+        <div style={{ backgroundColor: accent }} className="flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
             <img src={spotifyLogo} alt="Spotify Logo" className="w-32 mb-8" />
-            <div className="flex flex-col items-center  bg-gray-800 ">
-            <h2 className="text-2xl font-semibold">{name}</h2>
-            <h4 className="text-md font-light text-gray-400 ">{artist}</h4>
+            <div className="flex flex-col items-center bg-gray-800">
+                <h2 className="text-2xl font-semibold">{name}</h2>
+                <h4 className="text-md font-light text-gray-400">{artist}</h4>
                 <img 
                     src={`https://cms.samespace.com/assets/${cover}`} 
                     alt={name} 
                     className="w-64 h-64 object-cover"
                 />
-                
 
                 <input 
                     type="range" 
@@ -119,30 +125,30 @@ function Player() {
                 <div className="flex space-x-4">
                     <button 
                         onClick={previousSong} 
-                        className="text-white bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center"
+                        className="text-white bg-gray-700 hover:bg-gray-600 focus:ring focus:ring-offset-2 focus:ring-gray-500 rounded-full w-10 h-10 flex items-center justify-center"
                     >
                         ◀
                     </button>
                     <button 
                         onClick={isPlaying ? pauseSong : playSong} 
-                        className="text-white bg-green-500 hover:bg-green-400 rounded-full w-10 h-10 flex items-center justify-center"
+                        className="text-white bg-green-500 hover:bg-green-400 focus:ring focus:ring-offset-2 focus:ring-green-500 rounded-full w-10 h-10 flex items-center justify-center"
                     >
                         {isPlaying ? '❚❚' : '▶'}
                     </button>
                     <button 
                         onClick={nextSong} 
-                        className="text-white bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center"
+                        className="text-white bg-gray-700 hover:bg-gray-600 focus:ring focus:ring-offset-2 focus:ring-gray-500 rounded-full w-10 h-10 flex items-center justify-center"
                     >
                         ▶
                     </button>
                     <button
                         onClick={toggleMute}
-                        className="text-white bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center"
+                        className="text-white bg-gray-700 hover:bg-gray-600 focus:ring focus:ring-offset-2 focus:ring-gray-500 rounded-full w-10 h-10 flex items-center justify-center"
                     >
                         {isMuted ? '🔇' : '🔊'}
                     </button>
                 </div>
-                <audio ref={audioRef} id="audio" src={songUrl}></audio>
+                <audio ref={audioRef} id="audio" src={songUrl || ""}></audio>
             </div>
         </div>
     );
