@@ -1,40 +1,138 @@
-import { useState, useEffect } from "react"
-import spotifyLogo from '../src/assets/Logo.svg'
+import { useState, useEffect, useRef } from "react";
+import spotifyLogo from '../src/assets/Logo.svg';
+
+const url = "https://cms.samespace.com/items/songs";
 
 function Player() {
-
-    const [song, setSong] = useState([])
-    const url = "https://cms.samespace.com/items/songs"
+    const [songs, setSongs] = useState([]);
+    const [currentSongIndex, setCurrentSongIndex] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const audioRef = useRef(null);
 
     useEffect(() => {
-        const fetchSongs = async() => {
+        const fetchData = async () => {
             try {
-                const response = await fetch(url)
-                const data = await response.json()
-                setSong(data)
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    setSongs(data.data);
+                } else {
+                    console.error("Failed to fetch songs");
+                }
+            } catch (error) {
+                console.error("Error", error);
             }
-            catch (error){
-                console.error("Error fetching songs",error);
-            }
+        };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+            audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
         }
-        fetchSongs()
-    }, [])
+    }, [currentSongIndex]);
+
+    const handleTimeUpdate = () => {
+        setCurrentTime(audioRef.current.currentTime);
+    };
+
+    const handleLoadedMetadata = () => {
+        setDuration(audioRef.current.duration);
+    };
+
+    const playSong = () => {
+        audioRef.current.play();
+        setIsPlaying(true);
+    };
+
+    const pauseSong = () => {
+        audioRef.current.pause();
+        setIsPlaying(false);
+    };
+
+    const nextSong = () => {
+        setCurrentSongIndex((prevIndex) => (prevIndex + 1) % songs.length);
+        setIsPlaying(false);
+        setCurrentTime(0);
+    };
+
+    const previousSong = () => {
+        setCurrentSongIndex((prevIndex) => (prevIndex - 1 + songs.length) % songs.length);
+        setIsPlaying(false);
+        setCurrentTime(0);
+    };
+
+    const handleSeek = (e) => {
+        const seekTime = (e.target.value / 100) * duration;
+        audioRef.current.currentTime = seekTime;
+        setCurrentTime(seekTime);
+    };
+
+    const formatTime = (time) => {
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    };
+
+    if (!songs.length) {
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    }
+
+    const { name, artist, cover, url: songUrl, accent } = songs[currentSongIndex];
 
     return (
-        <>
-            <img src={spotifyLogo} />
-            {song.length > 0 ? (
-                song.map((songs) => (
-                    <div key={songs.id}>
-                        <img src={songs.url} alt={songs.title} />
-                        <p>{songs.title}</p>
-                    </div>
-                ))
-            ) : (
-                <p>Loading...</p>
-            )}
-        </>
-  )
+        <div style={{backgroundColor: accent}}
+        className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+            <img src={spotifyLogo} alt="Spotify Logo" className="w-32 mb-8" />
+            <div className="flex flex-col items-center p-6 bg-gray-800 rounded-lg shadow-lg max-w-sm">
+                <img 
+                    src={`https://your-cdn.com/${cover }`} 
+                    alt={name} 
+                    className="w-64 h-64 object-cover rounded-lg mb-4 shadow-lg"
+                />
+                <h2 className="text-2xl font-semibold">{name}</h2>
+                <h4 className="text-md font-light text-gray-400 mb-4">{artist}</h4>
+
+                <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={(currentTime / duration) * 100 || 0}
+                    onChange={handleSeek}
+                    className="w-full h-1 bg-gray-600 rounded-lg cursor-pointer mb-4"
+                />
+                <div className="flex justify-between w-full text-sm text-gray-400 mb-4">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(duration)}</span>
+                </div>
+
+                <div className="flex space-x-4">
+                    <button 
+                        onClick={previousSong} 
+                        className="text-white bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center"
+                    >
+                        ◀
+                    </button>
+                    <button 
+                        onClick={isPlaying ? pauseSong : playSong} 
+                        className="text-white bg-green-500 hover:bg-green-400 rounded-full w-10 h-10 flex items-center justify-center"
+                    >
+                        {isPlaying ? '❚❚' : '▶'}
+                    </button>
+                    <button 
+                        onClick={nextSong} 
+                        className="text-white bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center"
+                    >
+                        ▶
+                    </button>
+                </div>
+                <audio ref={audioRef} id="audio" src={songUrl}></audio>
+            </div>
+        </div>
+    );
 }
 
-export default Player
+export default Player;
