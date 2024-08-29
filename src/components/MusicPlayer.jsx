@@ -1,11 +1,14 @@
 /* eslint-disable react/prop-types */
-import  { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import ReactPlayer from 'react-player';
+import { MdOutlineSkipPrevious, MdOutlineSkipNext } from "react-icons/md";
+import { IoIosPlay, IoIosPause, IoIosVolumeHigh, IoIosVolumeMute } from "react-icons/io";
 
 const MusicPlayer = ({ currentSong, isPlaying, setIsPlaying, onNext, onPrev, onEnded }) => {
   const playerRef = useRef(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.8); 
 
   const handleProgress = (state) => {
@@ -23,6 +26,10 @@ const MusicPlayer = ({ currentSong, isPlaying, setIsPlaying, onNext, onPrev, onE
 
   const handleVolumeChange = (event) => {
     setVolume(parseFloat(event.target.value)); 
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
   };
 
   const formatTime = (seconds) => {
@@ -43,7 +50,7 @@ const MusicPlayer = ({ currentSong, isPlaying, setIsPlaying, onNext, onPrev, onE
           <img
             src={`https://cms.samespace.com/assets/${currentSong.cover}`}
             alt={currentSong.name}
-            className="w-[500px] h-[500px] object-cover rounded-lg shadow-lg mb-8"
+            className="w-[470px] h-[470px] object-cover rounded-lg shadow-lg mb-8"
           />
   
           <div className="w-full flex items-center justify-center space-x-4 mb-4">
@@ -60,7 +67,11 @@ const MusicPlayer = ({ currentSong, isPlaying, setIsPlaying, onNext, onPrev, onE
           </div>
 
           <div className="w-full flex items-center justify-center space-x-4 mb-4">
-            <label className="text-sm">Volume</label>
+            <button 
+                onClick={toggleMute}
+                className="w-5 h-5">
+                    {isMuted ? <IoIosVolumeMute/> : <IoIosVolumeHigh/>}
+            </button>
             <input
               type="range"
               min="0"
@@ -77,19 +88,19 @@ const MusicPlayer = ({ currentSong, isPlaying, setIsPlaying, onNext, onPrev, onE
               onClick={onPrev}
               className="px-4 py-2 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors"
             >
-              Previous
+              <MdOutlineSkipPrevious />
             </button>
             <button 
               onClick={() => setIsPlaying(!isPlaying)}
               className="px-4 py-2 bg-green-500 rounded-full hover:bg-green-400 transition-colors"
             >
-              {isPlaying ? "Pause" : "Play"}
+              {isPlaying ? <IoIosPause/> : <IoIosPlay/>}
             </button>
             <button 
               onClick={onNext}
               className="px-4 py-2 bg-gray-700 rounded-full hover:bg-gray-600 transition-colors"
             >
-              Next
+              <MdOutlineSkipNext />
             </button>
           </div>
   
@@ -101,6 +112,7 @@ const MusicPlayer = ({ currentSong, isPlaying, setIsPlaying, onNext, onPrev, onE
             onProgress={handleProgress}
             onDuration={handleDuration}
             volume={volume} 
+            muted={isMuted} 
             controls={false}
             width="0"
             height="0"
